@@ -10,6 +10,7 @@ def getChapterURLs(url:str) -> dict:
     soup = BeautifulSoup(response.content, 'html.parser')
     for i in soup.find_all('li'):
         r.append(i.find('a').attrs)
+    r.reverse()
     return r
 
 def getChapterText(chs:list) -> dict:
