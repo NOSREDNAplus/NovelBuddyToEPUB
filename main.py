@@ -62,11 +62,14 @@ def writeToEPUB(chs:dict, details:dict):
     book.set_title(details['title'])
     book.set_language("en")
     book.add_author(details['author'])
-    with open(details['cover'], "rb") as f:
-        img = f.read()
-        f.close()
-        if validImage(details['cover']):
-            book.set_cover(f'image.{details['cover'].split('.')[1]}', img)
+    if details['cover'] != None:
+        with open(details['cover'], "rb") as f:
+            img = f.read()
+            f.close()
+            if validImage(details['cover']):
+                book.set_cover(f'image.{details['cover'].split('.')[1]}', img)
+    else:
+        print("Skipped adding cover!")
     book.spine = ["nav"]
     for i in chs.items():
         c = epub.EpubHtml(title=i[0], file_name=f"{i[0]}.xhtml", lang="en")
@@ -74,11 +77,9 @@ def writeToEPUB(chs:dict, details:dict):
         book.add_item(c)
         book.toc.append(epub.Link(href=f"{i[0]}.xhtml", title=i[0]))
         book.spine.append(c)
-
-    #book.add_item(epub.EpubNcx())
     book.add_item(epub.EpubNav())
     with open('./css/base.css') as f:
-        style = f.read() #'body { font-family: Times, Times New Roman, serif; }'
+        style = f.read()
     nav_css = epub.EpubItem(
         uid="style_nav",
         file_name="style/nav.css",
