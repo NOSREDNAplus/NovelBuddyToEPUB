@@ -12,6 +12,17 @@ def validImage(file_name):
     except (IOError, SyntaxError):
         return False
 
+def cleanFileName(filename:str) -> str:
+    filename.replace('<','')
+    filename.replace('>', '')
+    filename.replace(':', '')
+    filename.replace('/', '')
+    filename.replace('\\', '')
+    filename.replace('|', '')
+    filename.replace('?', '')
+    filename.replace('*', '')
+    return filename
+
 def getChapterURLs(url:str) -> dict:
     r = []
     response = requests.get(url)
@@ -49,10 +60,11 @@ def getNovelDetails(url:str, getcover=True) -> dict:
         coverURl = "https:" + soup.find('div', class_="img-cover").find('img').attrs['data-src']
         coverImage = requests.get(coverURl).content
         ext = coverURl.split('.', 3)[3]
-        with open(f'./cache/{r['title']}.{ext}', 'wb') as f:
+        path = f'./cache/{cleanFileName(r['title'])}.{ext}'
+        with open(path, 'wb') as f:
             f.write(coverImage)
             f.close()
-        r['cover'] = f'./cache/{r['title']}.{ext}'
+        r['cover'] = path
     else:
         r['cover'] = None
     return r
@@ -87,7 +99,7 @@ def writeToEPUB(chs:dict, details:dict):
         content=style,
     )
     book.add_item(nav_css)
-    epub.write_epub(f"./results/{details['title']}.epub", book)
+    epub.write_epub(f"./results/{cleanFileName(details['title'])}.epub", book)
 
 def main():
     if not os.path.exists('./results'):
