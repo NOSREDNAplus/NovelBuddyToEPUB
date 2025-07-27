@@ -88,6 +88,8 @@ def writeToEPUB(chs:dict, details:dict):
 def main():
     if not os.path.exists('./results'):
         os.makedirs('./results')
+    if not os.path.exists('./cache'):
+        os.makedirs('./cache')
     with open("config.json", 'r') as f:
         d = json.load(f)
         url = d['url']
