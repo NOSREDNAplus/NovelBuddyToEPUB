@@ -1,0 +1,3 @@
+beautifulsoup4
+pypub3
+requests
