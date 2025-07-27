@@ -13,14 +13,14 @@ def validImage(file_name):
         return False
 
 def cleanFileName(filename:str) -> str:
-    filename.replace('<','')
-    filename.replace('>', '')
-    filename.replace(':', '')
-    filename.replace('/', '')
-    filename.replace('\\', '')
-    filename.replace('|', '')
-    filename.replace('?', '')
-    filename.replace('*', '')
+    filename = filename.replace('<','')
+    filename = filename.replace('>', '')
+    filename = filename.replace(':', '')
+    filename = filename.replace('/', '')
+    filename = filename.replace('\\', '')
+    filename = filename.replace('|', '')
+    filename = filename.replace('?', '')
+    filename = filename.replace('*', '')
     return filename
 
 def getChapterURLs(url:str) -> dict:
