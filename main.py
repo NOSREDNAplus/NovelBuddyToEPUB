@@ -1,4 +1,4 @@
-import requests, time, pypub, json
+import requests, time, pypub, json, os
 from bs4 import BeautifulSoup
 
 def getChapterURLs(url:str) -> dict:
@@ -13,7 +13,7 @@ def getChapterURLs(url:str) -> dict:
     r.reverse()
     return r
 
-def getChapterText(chs:list) -> dict:
+def getChapterText(chs:list, sep:str) -> dict:
     collec = {}
     for i in chs:
         response = requests.get(f'https://novelbuddy.com/{dict(i)['href']}')
@@ -21,8 +21,9 @@ def getChapterText(chs:list) -> dict:
         container = soup.find('div', class_='content-inner').find('div')
         text = ""
         for t in container.find_all('p'):
-            text += f"{t.text}\n"
+            text += f"{t.text}{sep}"
         collec[dict(i)['title']] = text
+        break
     return collec
 
 def getNovelDetails(url:str) -> dict:
@@ -35,21 +36,24 @@ def getNovelDetails(url:str) -> dict:
 
 def writeToEPUB(chs:dict, details:dict):
     book = pypub.Epub(details['title'], language='en', creator=details['author'])
+    book.css_paths.append('./css/base.css')
     for i in chs.items():
         c = pypub.create_chapter_from_text(i[1], title=i[0])
         book.add_chapter(c)
     book.create(f"./results/{details['title']}.epub")
 
 def main():
+    if os.path.exists('./results'):
+        os.makedirs('./results')
     with open("config.json", 'r') as f:
         d = json.load(f)
-        url = d['url']
+        url, sep = d['url'], d['sep']
     sTime = time.time()
     chapterURLS = getChapterURLs(url)
     novelDetails = getNovelDetails(url)
     print(f"Successfully got chapter URLs and novel details in {time.time() - sTime}s")
     sTime = time.time()
-    chapterText = getChapterText(chapterURLS)
+    chapterText = getChapterText(chapterURLS, sep)
     print(f"Successfully got chapter text in {time.time() - sTime}s!")
     sTime = time.time()
     writeToEPUB(chapterText, novelDetails)
