@@ -23,7 +23,6 @@ def getChapterText(chs:list, sep:str) -> dict:
         for t in container.find_all('p'):
             text += f"{t.text}{sep}"
         collec[dict(i)['title']] = text
-        break
     return collec
 
 def getNovelDetails(url:str) -> dict:
