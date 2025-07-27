@@ -42,7 +42,7 @@ def writeToEPUB(chs:dict, details:dict):
     book.create(f"./results/{details['title']}.epub")
 
 def main():
-    if os.path.exists('./results'):
+    if not os.path.exists('./results'):
         os.makedirs('./results')
     with open("config.json", 'r') as f:
         d = json.load(f)
