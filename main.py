@@ -39,19 +39,22 @@ def getChapterText(chs:list) -> dict:
             p.update(t, advance=1)
     return collec
 
-def getNovelDetails(url:str) -> dict:
+def getNovelDetails(url:str, getcover=True) -> dict:
     r = {}
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
     r['title'] = soup.find('div', class_='name box').find('h1').text
     r['author'] = soup.find('div', class_='meta box mt-1 p-10').find('p').find('a').attrs['title']
-    coverURl = "https:" + soup.find('div', class_="img-cover").find('img').attrs['data-src']
-    coverImage = requests.get(coverURl).content
-    ext = coverURl.split('.', 3)[3]
-    with open(f'./cache/{r['title']}.{ext}', 'wb') as f:
-        f.write(coverImage)
-        f.close()
-    r['cover'] = f'./cache/{r['title']}.{ext}'
+    if getcover:
+        coverURl = "https:" + soup.find('div', class_="img-cover").find('img').attrs['data-src']
+        coverImage = requests.get(coverURl).content
+        ext = coverURl.split('.', 3)[3]
+        with open(f'./cache/{r['title']}.{ext}', 'wb') as f:
+            f.write(coverImage)
+            f.close()
+        r['cover'] = f'./cache/{r['title']}.{ext}'
+    else:
+        r['cover'] = None
     return r
 
 def writeToEPUB(chs:dict, details:dict):
@@ -93,10 +96,11 @@ def main():
     with open("config.json", 'r') as f:
         d = json.load(f)
         url = d['url']
+        getcover = d['getCover']
     chapterURLS = getChapterURLs(url)
     print("Successfully got chapter urls!")
     sTime = time.time()
-    novelDetails = getNovelDetails(url)
+    novelDetails = getNovelDetails(url, getcover)
     print(f"Successfully got novel details in {round(time.time() - sTime, 1)}s")
     chapterText = getChapterText(chapterURLS)
     print(f"Successfully processed chapter text!")
