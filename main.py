@@ -47,10 +47,11 @@ def getNovelDetails(url:str) -> dict:
     r['author'] = soup.find('div', class_='meta box mt-1 p-10').find('p').find('a').attrs['title']
     coverURl = "https:" + soup.find('div', class_="img-cover").find('img').attrs['data-src']
     coverImage = requests.get(coverURl).content
-    with open(f'./cache/{r['title']}.png', 'wb') as f:
+    ext = coverURl.split('.', 3)[3]
+    with open(f'./cache/{r['title']}.{ext}', 'wb') as f:
         f.write(coverImage)
         f.close()
-    r['cover'] = f'./cache/{r['title']}.png'
+    r['cover'] = f'./cache/{r['title']}.{ext}'
     return r
 
 def writeToEPUB(chs:dict, details:dict):
@@ -62,7 +63,7 @@ def writeToEPUB(chs:dict, details:dict):
         img = f.read()
         f.close()
         if validImage(details['cover']):
-            book.set_cover('image.png', img)
+            book.set_cover(f'image.{details['cover'].split('.')[1]}', img)
     book.spine = ["nav"]
     for i in chs.items():
         c = epub.EpubHtml(title=i[0], file_name=f"{i[0]}.xhtml", lang="en")
