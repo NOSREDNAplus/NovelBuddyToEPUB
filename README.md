@@ -3,13 +3,19 @@
 
 Converts Novels from Novel Buddy into EPUB files.
 
-## Dependinces
-All dependinces are stored in `requirements.txt` install by using in folder `pip install -r requirements.txt`
+## Dependences
+All dependences are stored in `requirements.txt` install by using in folder `pip install -r requirements.txt`
 
 ## How to use
-Put novel URL in `config.json` and run file.
+Run the program using command arguments, for example `python main.py -u "https://novelbuddy.com/novel/<your novel name here>"`. There are also settings to customize what to fetch listed below:
 
-Note: Some EPUB readers might not be able to load novel cover, to avoid this toggle `getCover` in the `config.json` to `false`.
+`-gc` Use this argument to fetch the novel's cover (Note: this may cause issues with EPUB readers)
+
+`-c` Amount of chapters to fetch, defaults to `"all"`
+
+`-sc` Chapter to start fetching on, default to `0`
+
+`-u` URL of the novel to fetch
 
 ##
 
