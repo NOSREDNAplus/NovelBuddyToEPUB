@@ -1,6 +1,7 @@
-import requests, time, json, os
-from bs4 import BeautifulSoup
+import requests, time, os
+from argparse import ArgumentParser
 from ebooklib import epub
+from bs4 import BeautifulSoup
 from rich.progress import Progress
 from PIL import Image
 
@@ -38,11 +39,16 @@ def getChapterURLs(url:str) -> dict:
     r.reverse()
     return r
 
-def getChapterText(chs:list) -> dict:
+def getChapterText(chs:list, n:str, sn:str) -> dict:
     collec = {}
+    sn = int(sn)
+    if not str(n).isnumeric() and n == "all":
+        n = len(chs)
+    else:
+        n = int(n)
     with Progress() as p:
-        t = p.add_task("Processing chapter text...", total=len(chs))
-        for i in chs:
+        t = p.add_task("Processing chapter text...", total=len(chs[sn:n]))
+        for i in chs[sn:n]:
             response = requests.get(f'https://novelbuddy.com{dict(i)['href']}')
             soup = BeautifulSoup(response.content, 'html.parser')
             container = soup.find('div', class_='content-inner')
@@ -86,6 +92,7 @@ def writeToEPUB(chs:dict, details:dict):
     for i in chs.items():
         c = epub.EpubHtml(title=i[0], file_name=f"{i[0]}.xhtml", lang="en")
         c.set_content(i[1])
+        #c.properties.append('rendition:layout-pre-paginated rendition:orientation-landscape rendition:spread-none')
         book.add_item(c)
         book.toc.append(epub.Link(href=f"{i[0]}.xhtml", title=i[0]))
         book.spine.append(c)
@@ -99,23 +106,25 @@ def writeToEPUB(chs:dict, details:dict):
         content=style,
     )
     book.add_item(nav_css)
-    epub.write_epub(f"./results/{cleanFileName(details['title'])}.epub", book)
+    epub.write_epub(f"./results/{cleanFileName(details['title'])}.epub", book, {})
 
 def main():
-    if not os.path.exists('./results'):
-        os.makedirs('./results')
     if not os.path.exists('./cache'):
         os.makedirs('./cache')
-    with open("config.json", 'r') as f:
-        d = json.load(f)
-        url = d['url']
-        getcover = d['getCover']
-    chapterURLS = getChapterURLs(url)
+    if not os.path.exists('./results'):
+        os.makedirs('./results')
+    parser = ArgumentParser()
+    parser.add_argument('-u', '--url', action="store")
+    parser.add_argument('-c', '--chapters', action="store", default="all")
+    parser.add_argument('-gc', '--getcover', action="store_true")
+    parser.add_argument('-sc', '--startchapter', action="store", default=0)
+    args = parser.parse_args()
+    chapterURLS = getChapterURLs(args.url)
     print("Successfully got chapter urls!")
     sTime = time.time()
-    novelDetails = getNovelDetails(url, getcover)
+    novelDetails = getNovelDetails(args.url, args.getcover)
     print(f"Successfully got novel details in {round(time.time() - sTime, 1)}s")
-    chapterText = getChapterText(chapterURLS)
+    chapterText = getChapterText(chapterURLS, args.chapters, args.startchapter)
     print(f"Successfully processed chapter text!")
     sTime = time.time()
     writeToEPUB(chapterText, novelDetails)
