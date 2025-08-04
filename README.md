@@ -13,7 +13,7 @@ Run the program using command arguments, for example `python main.py -u "https:/
 
 `-c` Amount of chapters to fetch, defaults to `"all"`
 
-`-sc` Chapter to start fetching on, default to `0`
+`-sc` Chapter to start fetching on, defaults to `0`
 
 `-u` URL of the novel to fetch
 
