@@ -17,6 +17,8 @@ Run the program using command arguments, for example `python main.py -u "https:/
 
 `-u` URL of the novel to fetch
 
+`-w` Lets you adjust the amount of workers, defaults to `5` (you should use more workers the more chapters for peak efficiency)
+
 ##
 
 No guarenteed updates, but enjoy! 😀
