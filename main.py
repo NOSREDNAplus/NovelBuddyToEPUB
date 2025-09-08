@@ -1,4 +1,4 @@
-import requests, time, os
+import requests, time, os, threading, gc
 from argparse import ArgumentParser
 from ebooklib import epub
 from bs4 import BeautifulSoup
@@ -39,22 +39,43 @@ def getChapterURLs(url:str) -> dict:
     r.reverse()
     return r
 
-def getChapterText(chs:list, n:str, sn:str) -> dict:
+def textWorker(chs:list, comp:dict, num:int):
+    collec = {}
+    with Progress() as p:
+        t = p.add_task(f"Processing chapter text for chunk {num}...", total=len(chs))
+        for i in chs:
+            response = requests.get(f'https://novelbuddy.com{dict(i)['href']}')
+            soup = BeautifulSoup(response.content, 'html.parser')
+            container = soup.find('div', class_='content-inner')
+            collec[dict(i)['title']] = container.prettify()
+            p.update(t, advance=1)
+    comp[num] = collec
+
+
+def splitIntoChunks(data, threads) -> list:
+    chunk_size = (len(data) + threads - 1) // threads
+    return [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
+
+
+def getChapterText(chs:list, n:str, sn:str, wrkrs:int = 5) -> dict:
     collec = {}
     sn = int(sn)
     if not str(n).isnumeric() and n == "all":
         n = len(chs)
     else:
         n = int(n)
-    with Progress() as p:
-        t = p.add_task("Processing chapter text...", total=len(chs[sn:n]))
-        for i in chs[sn:n]:
-            response = requests.get(f'https://novelbuddy.com{dict(i)['href']}')
-            soup = BeautifulSoup(response.content, 'html.parser')
-            container = soup.find('div', class_='content-inner')
-            collec[dict(i)['title']] = container.prettify()
-            p.update(t, advance=1)
-    return collec
+    chs = chs[sn:n]
+    chunkSize = splitIntoChunks(chs, wrkrs)
+    for i in range(wrkrs):
+        threading.Thread(target=textWorker, daemon=True, args=(chunkSize[i], collec, i)).start()
+    while len(collec.keys()) != wrkrs:
+        pass
+    # print(collec.keys()); os._exit(0)
+    fcollec = {}
+    for i in range(wrkrs):
+        for c in collec[i].items():
+            fcollec[c[0]] = c[1]
+    return fcollec
 
 def getNovelDetails(url:str, getcover=True) -> dict:
     r = {}
@@ -76,6 +97,7 @@ def getNovelDetails(url:str, getcover=True) -> dict:
     return r
 
 def writeToEPUB(chs:dict, details:dict):
+    gc.collect()
     book = epub.EpubBook()
     book.set_title(details['title'])
     book.set_language("en")
@@ -118,13 +140,14 @@ def main():
     parser.add_argument('-c', '--chapters', action="store", default="all")
     parser.add_argument('-gc', '--getcover', action="store_true")
     parser.add_argument('-sc', '--startchapter', action="store", default=0)
+    parser.add_argument('-w', '--workers', action="store", default=5)
     args = parser.parse_args()
     chapterURLS = getChapterURLs(args.url)
     print("Successfully got chapter urls!")
     sTime = time.time()
     novelDetails = getNovelDetails(args.url, args.getcover)
     print(f"Successfully got novel details in {round(time.time() - sTime, 1)}s")
-    chapterText = getChapterText(chapterURLS, args.chapters, args.startchapter)
+    chapterText = getChapterText(chapterURLS, args.chapters, args.startchapter, int(args.workers))
     print(f"Successfully processed chapter text!")
     sTime = time.time()
     writeToEPUB(chapterText, novelDetails)
